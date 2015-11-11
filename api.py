@@ -25,7 +25,7 @@ def connect(today, opened, closed, total):
 	c = conn.cursor()
 
 	c.execute(''' CREATE TABLE IF NOT EXISTS graph (today date, opened int, closed int, total int) ''')
-	c.execute(" INSERT INTO graph (today, opened, closed, total) VALUES ('today', 'opened', 'closed', 'total') ")
+	c.execute(" INSERT INTO graph (today, opened, closed, total) VALUES (?, ?, ?, ?)", [today, opened, closed, total] )
 
 	#save
 	conn.commit()
