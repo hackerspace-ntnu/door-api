@@ -2,8 +2,10 @@ from flask import Flask, jsonify
 from flask.ext.restful import reqparse, abort, Api, Resource
 from flask.ext.restful.inputs import boolean
 import sqlite3
-import datetime
-import time
+import datetime, time
+
+
+global date, opened_sec
 
 app = Flask(__name__)
 api = Api(app)
@@ -20,9 +22,10 @@ parser.add_argument('door', type=boolean)
 def connect(today, opened, closed, total):
 
 	conn = sqlite3.connect('door_graph.db')
-	
+	c = conn.cursor()
+
 	c.execute(''' CREATE TABLE IF NOT EXISTS graph (today date, opened int, closed int, total int) ''')
-	c.execute(" INSERT INTO graph VALUES (today, opened, closed, total) ")
+	c.execute(" INSERT INTO graph (today, opened, closed, total) VALUES ('today', 'opened', 'closed', 'total') ")
 
 	#save
 	conn.commit()
@@ -43,16 +46,16 @@ class DoorOpen(Resource):
     def post(self, key):
         if key in resource_fields:
             resource_fields[key]=True
-            global opened_min = int(round(time.time()))
-            global date = datetime.date.today()
+            opened_sec = int(round(time.time())) 
+            date = datetime.date.today()
             return resource_fields[key], 200
 
 class DoorClosed(Resource):
     def post(self, key):
         if key in resource_fields:
             resource_fields[key]=False
-            closed_min = int(round(time.time()))
-            calculate(date, opened_min, closed_min)
+            closed_sec = int(round(time.time()))
+            calculate(date, opened_sec, closed_sec)
             return resource_fields[key], 200
 	
 api.add_resource(Door, '/api/<string:key>')
