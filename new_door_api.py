@@ -2,7 +2,8 @@ import RPi.GPIO as GPIO
 import httplib, datetime, time
 import sqlite3
 
-global date, opened_sec
+date = time.asctime( time.localtime ( time.time() ))
+opened_sec = -1
 
 TIMEOUT = 5.0 #seconds
 API_HOST = "hackerspace-ntnu.no"
@@ -27,7 +28,7 @@ def calculate(date, opened, closed):
 
   time = closed - opened
   if(time >= 300 and time <= 600000):
-    "Hackerspace has been open in " + str(time) + " seconds."
+    str(date) + " - Hackerspace has been open in " + str(time) + " seconds."
     connect(date, opened, closed, time)
 
 def check_door(state):
@@ -41,12 +42,12 @@ def check_door(state):
     if gpio == 1:
       conn.request('POST', API_ENDPOINT+"/closed")
       closed_sec = int(round(time.time()))
+      global date, opened_sec
       calculate(date, opened_sec, closed_sec)
       print "Door closed"
     else:
       conn.request('POST', API_ENDPOINT+"/open")
       opened_sec = int(round(time.time())) 
-      date = datetime.date.today()
       print "Door open"
   return gpio
 
