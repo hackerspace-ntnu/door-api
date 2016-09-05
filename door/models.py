@@ -15,13 +15,29 @@ class Door(Model):
             return latest_status.open
 
     def open(self):
+        if self.is_open():
+            return
+
         DoorStatus.objects.create(open=True, timestamp=timezone.now(), door=self)
 
     def close(self):
+        if not self.is_open():
+            return
+
         DoorStatus.objects.create(open=False, timestamp=timezone.now(), door=self)
+
+    def __str__(self):
+        return self.name
 
 
 class DoorStatus(Model):
     open = BooleanField(default=False, null=False, blank=False)
     timestamp = DateTimeField(null=False, blank=False)
     door = ForeignKey(to=Door)
+
+    def __str__(self):
+        return '{name} {timestamp} {status}'.format(
+            name=self.door.name,
+            timestamp=self.timestamp,
+            status='OPEN' if self.open else 'CLOSED',
+        )
