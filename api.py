@@ -3,7 +3,6 @@ import sys
 from django.conf import settings
 from django.conf.urls import url
 from django.core.management import execute_from_command_line
-from django.http import HttpResponse
 from django.http.response import JsonResponse
 from django.views.generic.base import View
 
@@ -21,16 +20,21 @@ settings.configure(
 )
 
 
-class ApiView(View):
+class DoorApiView(View):
     def get(self):
-        return JsonResponse()
+        is_open = False  # TODO
+        return JsonResponse({
+            'open': is_open,
+        })
 
     def post(self):
-        return JsonResponse()
+        return JsonResponse({
+            'to': 'do',
+        })
 
 
 urlpatterns = [
-    url(r'^api/door/$', ApiView.as_view()),
+    url(r'^api/door/(?P<name>.*)/$', DoorApiView.as_view(), name='door-api'),
 ]
 
 if __name__ == '__main__':

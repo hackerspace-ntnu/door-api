@@ -1,8 +1,12 @@
+import json
+
 from django.test import TestCase
+from django.test.client import RequestFactory
+from django.urls.base import reverse
 
 from door.models import Door
 
-TEST_DOOR = 'TEST_DOOR'
+TEST_DOOR = 'test'
 
 
 class DoorModelTestCase(TestCase):
@@ -26,3 +30,37 @@ class DoorModelTestCase(TestCase):
         door.close()
 
         self.assertFalse(door.is_open())
+
+
+class DoorApiViewTestCase(TestCase):
+    def setUp(self):
+        door = Door.objects.create(name=TEST_DOOR)
+
+        self.url = reverse('door-api', kwargs={'name': door.name})
+        self.factory = RequestFactory()
+
+    def test_get_status_open(self):
+        request = self.factory.get(self.url)
+        print(request.__dict__)
+        print(1, (request.body.decode('utf-8')), 2)
+
+    def test_get_status_closed(self):
+        pass
+
+    def test_api_open_without_key(self):
+        pass
+
+    def test_api_open_with_wrong_key(self):
+        pass
+
+    def test_api_open_with_correct_key(self):
+        pass
+
+    def test_api_close_without_key(self):
+        pass
+
+    def test_api_close_with_wrong_key(self):
+        pass
+
+    def test_api_close_with_correct_key(self):
+        pass
