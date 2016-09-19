@@ -12,7 +12,7 @@ TEST_DOOR = 'test'
 class JsonClient(Client):
     def get(self, *args, **kwargs):
         response = super().get(*args, **kwargs)
-        response.content = json.loads(response.content.decode('utf-8'))
+        response.decoded_content = json.loads(response.content.decode('utf-8'))
         return response
 
 
@@ -47,10 +47,11 @@ class DoorModelTestCase(TestCase):
 
     def test_double_close(self):
         door = Door.objects.get(name=TEST_DOOR)
+        door.open()
         door.close()
         door.close()
 
-        self.assertEqual(door.doorstatus_set.count(), 1)
+        self.assertEqual(door.doorstatus_set.count(), 2)
 
 
 class DoorApiViewTestCase(TestCase):
@@ -67,7 +68,7 @@ class DoorApiViewTestCase(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.content['open'])
+        self.assertEqual(response.decoded_content['open'], True)
 
     def test_get_status_closed(self):
         door = Door.objects.get(name=TEST_DOOR)
@@ -76,7 +77,7 @@ class DoorApiViewTestCase(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(response.content['open'])
+        self.assertEqual(response.decoded_content['open'], False)
 
     def test_api_open_without_key(self):
         door = Door.objects.get(name=TEST_DOOR)
