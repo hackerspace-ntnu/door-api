@@ -1,5 +1,5 @@
 from django.db.models.base import Model
-from django.db.models.fields import CharField, BooleanField, DateTimeField
+from django.db.models.fields import BooleanField, CharField, DateTimeField
 from django.db.models.fields.related import ForeignKey
 from django.utils import timezone
 
@@ -7,8 +7,13 @@ from django.utils import timezone
 class Door(Model):
     name = CharField(primary_key=True, max_length=32)
 
+    @property
+    def latest_status(self):
+        return DoorStatus.objects.filter(door=self).order_by('-timestamp').first()
+
     def is_open(self):
-        latest_status = DoorStatus.objects.filter(door=self).order_by('-timestamp').first()
+        latest_status = self.latest_status
+
         if latest_status is None:
             return False
         else:
@@ -25,6 +30,20 @@ class Door(Model):
             return
 
         DoorStatus.objects.create(open=False, timestamp=timezone.now(), door=self)
+
+    def get_status_dict(self):
+        """
+        Returns a dict representation that can be json dumped
+        """
+        latest_status = self.latest_status
+
+        return {
+            'name': self.name,
+            'status': {
+                'open': latest_status.open,
+                'timestamp': latest_status.timestamp.timestamp()
+            },
+        }
 
     def __str__(self):
         return self.name

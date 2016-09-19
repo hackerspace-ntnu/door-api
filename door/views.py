@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.http.response import JsonResponse, HttpResponse
+from django.http.response import HttpResponse, JsonResponse
 from django.views.generic.base import View
 
 from door.models import Door
@@ -11,9 +11,7 @@ class DoorApiView(View):
         name = kwargs.get('name')
         door = Door.objects.get(name=name)
 
-        return JsonResponse({
-            'open': door.is_open(),
-        })
+        return JsonResponse(door.get_status_dict())
 
     def post(self, request, *args, **kwargs):
         decoded_body = decode_json_bytes(request.body)
@@ -29,6 +27,4 @@ class DoorApiView(View):
         else:
             door.close()
 
-        return JsonResponse({
-            'open': door.is_open(),
-        }, status=201)
+        return JsonResponse(door.get_status_dict(), status=201)

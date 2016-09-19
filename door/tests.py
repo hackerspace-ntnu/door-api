@@ -75,16 +75,18 @@ class DoorApiViewTestCase(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.decoded_content['open'], True)
+        self.assertEqual(response.decoded_content['name'], TEST_DOOR)
+        self.assertEqual(response.decoded_content['status']['open'], True)
 
     def test_get_status_closed(self):
         door = Door.objects.get(name=TEST_DOOR)
+        door.open()
         door.close()
 
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.decoded_content['open'], False)
+        self.assertEqual(response.decoded_content['status']['open'], False)
 
     def test_api_open_without_key(self):
         door = Door.objects.get(name=TEST_DOOR)
