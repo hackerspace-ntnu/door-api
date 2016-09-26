@@ -9,7 +9,7 @@ class Door(Model):
 
     @property
     def latest_status(self):
-        return DoorStatus.objects.filter(door=self).order_by('-timestamp').first()
+        return self.doorstatus_set.first()
 
     def is_open(self):
         latest_status = self.latest_status
@@ -21,15 +21,17 @@ class Door(Model):
 
     def open(self):
         if self.is_open():
-            return
+            return False
 
         DoorStatus.objects.create(open=True, timestamp=timezone.now(), door=self)
+        return True
 
     def close(self):
         if not self.is_open():
-            return
+            return False
 
         DoorStatus.objects.create(open=False, timestamp=timezone.now(), door=self)
+        return True
 
     def get_status_dict(self):
         """
@@ -39,14 +41,14 @@ class Door(Model):
 
         return {
             'name': self.name,
-            'status': {
-                'open': latest_status.open,
-                'timestamp': latest_status.timestamp.timestamp()
-            },
+            'status': self.latest_status.get_status_dict(),
         }
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ('name',)
 
 
 class DoorStatus(Model):
@@ -54,9 +56,21 @@ class DoorStatus(Model):
     timestamp = DateTimeField(null=False, blank=False)
     door = ForeignKey(to=Door)
 
+    def get_status_dict(self):
+        """
+        Returns a dict representation that can be json dumped
+        """
+        return {
+            'open': self.open,
+            'timestamp': self.timestamp.isoformat()
+        }
+
     def __str__(self):
         return '{name} {timestamp} {status}'.format(
             name=self.door.name,
             timestamp=self.timestamp,
             status='OPEN' if self.open else 'CLOSED',
         )
+
+    class Meta:
+        ordering = ('door', '-timestamp',)

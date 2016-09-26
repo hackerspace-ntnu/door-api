@@ -7,24 +7,23 @@ from door.utils import decode_json_bytes
 
 
 class DoorApiView(View):
-    def get(self, *args, **kwargs):
-        name = kwargs.get('name')
+    def get(self, *args, name, **kwargs):
         door = Door.objects.get(name=name)
 
         return JsonResponse(door.get_status_dict())
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, *args, name, **kwargs):
         decoded_body = decode_json_bytes(request.body)
 
-        if 'key' not in decoded_body or decoded_body['key'] != settings.DOOR_KEY:
+        if decoded_body.get('key') != settings.DOOR_KEY:
             return HttpResponse(status=401)
 
-        name = kwargs.get('name')
         door = Door.objects.get(name=name)
 
         if decoded_body['open']:
-            door.open()
+            changed = door.open()
         else:
-            door.close()
+            changed = door.close()
 
-        return JsonResponse(door.get_status_dict(), status=201)
+        status_code = 201 if changed else 200
+        return JsonResponse(door.get_status_dict(), status=status_code)

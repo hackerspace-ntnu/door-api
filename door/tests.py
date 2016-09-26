@@ -59,6 +59,17 @@ class DoorModelTestCase(TestCase):
 
         self.assertEqual(door.doorstatus_set.count(), 2)
 
+    def test_statuses_ordering(self):
+        door = Door.objects.get(name=TEST_DOOR)
+        door.open()
+        door.close()
+        door.open()
+
+        # should be reverse chrono ordered
+        t2, t1, t0 = door.doorstatus_set.values_list('timestamp', flat=True)
+
+        self.assertTrue(t2 > t1 > t0)
+
 
 @override_settings(DOOR_KEY=DOOR_KEY)
 class DoorApiViewTestCase(TestCase):
