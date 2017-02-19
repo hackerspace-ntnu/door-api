@@ -11,33 +11,33 @@ class Door(Model):
     def latest_status(self):
         return self.doorstatus_set.first()
 
+    @property
     def is_open(self):
         latest_status = self.latest_status
 
         if latest_status is None:
             return False
         else:
-            return latest_status.open
+            return latest_status.is_open
 
     def open(self):
-        if self.is_open():
+        if self.is_open:
             return False
 
-        DoorStatus.objects.create(open=True, timestamp=timezone.now(), door=self)
+        DoorStatus.objects.create(is_open=True, timestamp=timezone.now(), door=self)
         return True
 
     def close(self):
-        if not self.is_open():
+        if not self.is_open:
             return False
 
-        DoorStatus.objects.create(open=False, timestamp=timezone.now(), door=self)
+        DoorStatus.objects.create(is_open=False, timestamp=timezone.now(), door=self)
         return True
 
     def get_status_dict(self):
         """
         Returns a dict representation that can be json dumped
         """
-        latest_status = self.latest_status
 
         return {
             'name': self.name,
@@ -52,7 +52,7 @@ class Door(Model):
 
 
 class DoorStatus(Model):
-    open = BooleanField(default=False, null=False, blank=False)
+    is_open = BooleanField(default=False, null=False, blank=False)
     timestamp = DateTimeField(null=False, blank=False)
     door = ForeignKey(to=Door)
 
@@ -61,7 +61,7 @@ class DoorStatus(Model):
         Returns a dict representation that can be json dumped
         """
         return {
-            'open': self.open,
+            'is_open': self.is_open,
             'timestamp': self.timestamp.isoformat()
         }
 
@@ -69,7 +69,7 @@ class DoorStatus(Model):
         return '{name} {timestamp} {status}'.format(
             name=self.door.name,
             timestamp=self.timestamp,
-            status='OPEN' if self.open else 'CLOSED',
+            status='OPEN' if self.is_open else 'CLOSED',
         )
 
     class Meta:

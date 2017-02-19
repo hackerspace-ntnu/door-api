@@ -1,14 +1,14 @@
 import json
 
+from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
-from django.urls.base import reverse
 
 from door.models import Door
 from door.utils import decode_json_bytes
 
-TEST_DOOR = 'test'
+TEST_DOOR_NAME = 'test'
 DOOR_KEY = 'test-key'
 
 
@@ -24,35 +24,35 @@ class JsonClient(Client):
 
 class DoorModelTestCase(TestCase):
     def setUp(self):
-        Door.objects.create(name=TEST_DOOR)
+        Door.objects.create(name=TEST_DOOR_NAME)
 
     def test_closed_by_default(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
 
-        self.assertFalse(door.is_open())
+        self.assertFalse(door.is_open)
 
     def test_is_open(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
         door.open()
 
-        self.assertTrue(door.is_open())
+        self.assertTrue(door.is_open)
 
     def test_has_closed_after_being_open(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
         door.open()
         door.close()
 
-        self.assertFalse(door.is_open())
+        self.assertFalse(door.is_open)
 
     def test_double_open(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
         door.open()
         door.open()
 
         self.assertEqual(door.doorstatus_set.count(), 1)
 
     def test_double_close(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
         door.open()
         door.close()
         door.close()
@@ -60,7 +60,7 @@ class DoorModelTestCase(TestCase):
         self.assertEqual(door.doorstatus_set.count(), 2)
 
     def test_statuses_ordering(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
         door.open()
         door.close()
         door.open()
@@ -74,44 +74,44 @@ class DoorModelTestCase(TestCase):
 @override_settings(DOOR_KEY=DOOR_KEY)
 class DoorApiViewTestCase(TestCase):
     def setUp(self):
-        door = Door.objects.create(name=TEST_DOOR)
+        door = Door.objects.create(name=TEST_DOOR_NAME)
 
         self.url = reverse('door-api', kwargs={'name': door.name})
         self.client = JsonClient()
 
     def test_get_status_open(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
         door.open()
 
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.decoded_content['name'], TEST_DOOR)
-        self.assertEqual(response.decoded_content['status']['open'], True)
+        self.assertEqual(response.decoded_content['name'], TEST_DOOR_NAME)
+        self.assertEqual(response.decoded_content['status']['is_open'], True)
 
     def test_get_status_closed(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
         door.open()
         door.close()
 
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.decoded_content['status']['open'], False)
+        self.assertEqual(response.decoded_content['status']['is_open'], False)
 
     def test_api_open_without_key(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
         response = self.client.post(self.url, {
-            'open': True,
+            'is_open': True,
         })
 
         self.assertEqual(response.status_code, 401)
         self.assertEqual(door.doorstatus_set.count(), 0)
 
     def test_api_open_with_wrong_key(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
         response = self.client.post(self.url, {
-            'open': True,
+            'is_open': True,
             'key': 'incorrect key',
         })
 
@@ -119,9 +119,9 @@ class DoorApiViewTestCase(TestCase):
         self.assertEqual(door.doorstatus_set.count(), 0)
 
     def test_api_open_with_correct_key(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
         response = self.client.post(self.url, {
-            'open': True,
+            'is_open': True,
             'key': DOOR_KEY,
         })
 
@@ -129,18 +129,18 @@ class DoorApiViewTestCase(TestCase):
         self.assertEqual(door.doorstatus_set.count(), 1)
 
     def test_api_close_without_key(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
         response = self.client.post(self.url, {
-            'open': False,
+            'is_open': False,
         })
 
         self.assertEqual(response.status_code, 401)
         self.assertEqual(door.doorstatus_set.count(), 0)
 
     def test_api_close_with_wrong_key(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
         response = self.client.post(self.url, {
-            'open': False,
+            'is_open': False,
             'key': 'incorrect key',
         })
 
@@ -148,10 +148,10 @@ class DoorApiViewTestCase(TestCase):
         self.assertEqual(door.doorstatus_set.count(), 0)
 
     def test_api_close_with_correct_key(self):
-        door = Door.objects.get(name=TEST_DOOR)
+        door = Door.objects.get(name=TEST_DOOR_NAME)
         door.open()
         response = self.client.post(self.url, {
-            'open': False,
+            'is_open': False,
             'key': DOOR_KEY,
         })
 
